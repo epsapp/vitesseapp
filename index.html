@@ -3,10 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0c10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>VMA Tracker — Course de Durée</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;700&display=swap">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;700&display=swap');
-
   :root {
     --bg: #0a0c10;
     --surface: #12151c;
@@ -18,7 +23,7 @@
     --red: #ff2d55;
     --yellow: #ffd700;
     --text: #e8eaf0;
-    --muted: #5a6070;
+    --muted: #7a8194;
     --radius: 12px;
   }
 
@@ -27,10 +32,14 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'DM Sans', system-ui, sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
   }
+
+  button { touch-action: manipulation; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
 
   /* ─── HEADER ─── */
   header {
@@ -40,6 +49,7 @@
     border-bottom: 1px solid var(--border);
     position: sticky; top: 0; z-index: 100;
   }
+  header .kicker { font-size:0.65rem; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
   header h1 {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1.8rem; letter-spacing: 3px;
@@ -80,6 +90,15 @@
     font-size: 1rem; font-weight: 700;
     color: var(--text); margin-bottom: 12px;
   }
+  .hint { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
+
+  /* ─── BANNER ─── */
+  .banner {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    background: rgba(0,229,255,0.08); border: 1px solid var(--accent);
+    border-radius: var(--radius); padding: 14px 18px; margin-bottom: 20px;
+  }
+  .banner[hidden] { display: none; }
 
   /* ─── FORM ─── */
   .form-grid {
@@ -106,10 +125,11 @@
   input:focus, select:focus {
     outline: none; border-color: var(--accent);
   }
+  input.invalid { border-color: var(--red); }
 
   /* ─── SERIES BLOCK ─── */
   .series-row {
-    display: flex; align-items: center; gap: 12px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     background: var(--surface2); border-radius: 8px;
     padding: 10px 14px; margin-bottom: 8px;
   }
@@ -117,6 +137,7 @@
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1.1rem; color: var(--accent); min-width: 70px;
   }
+  .series-info { font-size:0.75rem; color:var(--muted); min-width:110px; font-family:'DM Mono',monospace; }
 
   /* ─── BUTTONS ─── */
   .btn {
@@ -127,18 +148,21 @@
     transition: all 0.2s; display: inline-flex;
     align-items: center; gap: 8px;
   }
+  .btn-sm { padding: 8px 16px; font-size: 0.95rem; }
   .btn-primary {
     background: var(--accent); color: var(--bg);
   }
-  .btn-primary:hover { background: #00c8e0; transform: translateY(-1px); }
+  .btn-primary:hover:not(:disabled) { background: #00c8e0; transform: translateY(-1px); }
   .btn-secondary {
     background: var(--surface2); color: var(--text);
     border: 1px solid var(--border);
   }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
   .btn-danger { background: var(--red); color: #fff; }
   .btn-success { background: var(--green); color: var(--bg); }
   .btn-warning { background: var(--yellow); color: var(--bg); }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px dashed var(--border); }
+  .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--muted); }
 
   .actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
 
@@ -164,7 +188,7 @@
     font-family: 'Bebas Neue', sans-serif;
     font-size: 5rem; letter-spacing: 6px;
     color: var(--accent); text-align: center;
-    line-height: 1;
+    line-height: 1; font-variant-numeric: tabular-nums;
   }
   .chrono-target {
     text-align: center; color: var(--muted);
@@ -172,38 +196,46 @@
     font-family: 'DM Mono', monospace;
   }
   .chrono-bar-wrap {
-    height: 6px; background: var(--surface2);
-    border-radius: 3px; margin: 12px 0; overflow: hidden;
+    position: relative;
+    height: 8px; background: var(--surface2);
+    border-radius: 4px; margin: 12px 0; overflow: hidden;
   }
   .chrono-bar {
     height: 100%; background: var(--accent);
-    transition: width 0.5s linear, background 0.3s;
-    border-radius: 3px;
+    transition: width 0.2s linear, background 0.3s;
+    border-radius: 4px;
+  }
+  .chrono-tick {
+    position: absolute; top: 0; bottom: 0; width: 2px;
+    background: var(--bg);
   }
 
   /* ─── BIG CLICK BUTTON ─── */
   .btn-plot-wrap {
-    display: flex; justify-content: center; margin: 18px 0;
+    display: flex; justify-content: center; align-items: center; gap: 16px; margin: 18px 0;
   }
   .btn-plot {
-    width: 160px; height: 160px; border-radius: 50%;
+    width: 170px; height: 170px; border-radius: 50%;
     border: 4px solid var(--accent);
     background: var(--surface2);
     color: var(--accent);
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.2rem; letter-spacing: 2px;
+    font-size: 1.3rem; letter-spacing: 2px;
     cursor: pointer; text-align: center;
-    transition: all 0.15s; user-select: none;
+    transition: all 0.1s; user-select: none; -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     gap: 6px; box-shadow: 0 0 30px rgba(0,229,255,0.1);
   }
-  .btn-plot:active {
+  .btn-plot:active, .btn-plot.flash {
     transform: scale(0.95);
     box-shadow: 0 0 50px rgba(0,229,255,0.4);
-    background: rgba(0,229,255,0.1);
+    background: rgba(0,229,255,0.15);
   }
+  .btn-plot:disabled { opacity: 0.35; }
   .btn-plot svg { width: 36px; height: 36px; }
+  .btn-plot .count { font-size: 2.2rem; line-height: 1; }
 
   /* ─── MARCHE BUTTON ─── */
   .btn-marche {
@@ -214,7 +246,7 @@
     font-size: 1rem; letter-spacing: 2px;
     cursor: pointer; transition: all 0.2s;
   }
-  .btn-marche.active, .btn-marche:active {
+  .btn-marche.active {
     background: var(--red); color: #fff;
   }
 
@@ -253,6 +285,16 @@
   .feedback-badge.slow { background: rgba(255,215,0,0.15); color: var(--yellow); border: 1px solid var(--yellow); }
   .feedback-badge.hidden { opacity: 0; }
 
+  /* ─── END OF SERIE PANEL ─── */
+  .serie-end {
+    text-align: center; margin-top: 16px; padding: 16px;
+    border: 1px solid var(--green); border-radius: 8px;
+    background: rgba(0,255,136,0.06);
+  }
+  .serie-end[hidden] { display: none; }
+  .serie-end p { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:2px; color:var(--green); margin-bottom:12px; }
+  .serie-end .actions { justify-content: center; margin-top: 0; }
+
   /* ─── TABLEAU PASSAGE ─── */
   .table-wrap { overflow-x: auto; margin-top: 16px; }
   table.passage {
@@ -265,6 +307,7 @@
     border: 1px solid var(--border);
     font-size: 0.7rem; letter-spacing: 1px;
   }
+  table.passage th.current { color: var(--accent); border-bottom: 2px solid var(--accent); }
   table.passage td {
     padding: 6px 10px; text-align: center;
     border: 1px solid var(--border);
@@ -272,7 +315,9 @@
   }
   table.passage td.crossed { color: var(--accent); font-weight: 700; }
   table.passage td.marche { background: rgba(255,45,85,0.3); color: var(--red); }
-  table.passage tr:last-child td { background: rgba(0,229,255,0.05); }
+  table.passage tr.target-row td { border-top: 2px solid var(--green); }
+  table.passage tr.target-row td:first-child { color: var(--green); }
+  table.passage tfoot td { background: rgba(0,229,255,0.05); font-weight: 500; }
 
   /* ─── RÉSULTATS FINAUX ─── */
   .result-block {
@@ -285,6 +330,14 @@
     font-size: 1.2rem; letter-spacing: 2px; margin-bottom: 10px;
     color: var(--accent);
   }
+  .result-line {
+    margin: 8px 0; padding: 10px; background: var(--bg); border-radius: 6px;
+    display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+  }
+  .result-line .s { font-family:'Bebas Neue',sans-serif; color:var(--accent); font-size:1.1rem; }
+  .result-cols { width:100%; display:flex; gap:6px; flex-wrap:wrap; font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--muted); }
+  .result-cols span { padding:2px 8px; border-radius:4px; background:var(--surface2); }
+  .result-summary { font-size:0.85rem; color:var(--muted); margin-top:6px; }
 
   /* ─── SEPARATOR ─── */
   hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
@@ -296,13 +349,13 @@
     border-radius: 20px; padding: 6px 16px;
     font-family: 'Bebas Neue', sans-serif;
     font-size: 1rem; letter-spacing: 2px; color: var(--accent);
-    margin-bottom: 16px;
+    margin-bottom: 8px;
   }
   .dot-live {
     width: 8px; height: 8px; border-radius: 50%;
-    background: var(--green);
-    animation: pulse 1.2s infinite;
+    background: var(--muted);
   }
+  .dot-live.on { background: var(--green); animation: pulse 1.2s infinite; }
   @keyframes pulse {
     0%,100% { opacity: 1; }
     50% { opacity: 0.3; }
@@ -320,11 +373,11 @@
   .series-pill.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.1); }
 
   /* ─── TOGGLE ─── */
-  .toggle-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; }
   .toggle {
     width: 44px; height: 24px; border-radius: 12px;
     background: var(--border); position: relative;
-    cursor: pointer; transition: background 0.2s; border: none;
+    cursor: pointer; transition: background 0.2s; border: none; flex-shrink: 0;
   }
   .toggle.on { background: var(--accent); }
   .toggle::after {
@@ -338,12 +391,22 @@
   .tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; }
   .tag-green { background: rgba(0,255,136,0.15); color: var(--green); }
   .tag-red { background: rgba(255,45,85,0.15); color: var(--red); }
+  .tag-yellow { background: rgba(255,215,0,0.15); color: var(--yellow); }
+  .tag-muted { background: var(--surface2); color: var(--muted); }
+
+  .kbd-hint { text-align:center; color:var(--muted); font-size:0.7rem; margin-top:12px; }
+  .kbd-hint kbd { font-family:'DM Mono',monospace; border:1px solid var(--border); border-radius:4px; padding:0 5px; }
 
   /* responsive */
   @media(max-width:500px) {
+    header { padding: 14px 16px; }
+    .screen { padding: 16px; }
+    .card { padding: 18px; }
     .chrono-display { font-size: 3.5rem; }
-    .btn-plot { width: 130px; height: 130px; }
+    .btn-plot { width: 140px; height: 140px; }
     .info-grid { grid-template-columns: 1fr 1fr; }
+    .step-dot { width: 26px; height: 26px; }
+    .kbd-hint { display: none; }
   }
 </style>
 </head>
@@ -351,49 +414,65 @@
 
 <header>
   <div>
-    <div style="font-size:0.65rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;">EPS — Course de Durée</div>
+    <div class="kicker">EPS — Course de Durée</div>
     <h1>VMA Tracker</h1>
   </div>
-  <div class="step-indicator">
-    <div class="step-dot active" id="dot1">1</div>
-    <div class="step-dot" id="dot2">2</div>
-    <div class="step-dot" id="dot3">3</div>
-    <div class="step-dot" id="dot4">4</div>
+  <div class="step-indicator" aria-label="Étapes">
+    <div class="step-dot active">1</div>
+    <div class="step-dot">2</div>
+    <div class="step-dot">3</div>
+    <div class="step-dot">4</div>
   </div>
 </header>
 
 <!-- ════════════════ SCREEN 1 : CONFIG SÉANCE ════════════════ -->
 <div class="screen active" id="screen1">
+  <div class="banner" id="resumeBanner" hidden>
+    <span>💾 Une séance non terminée a été trouvée <b id="resumeInfo"></b></span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-primary btn-sm" onclick="resumeSaved()">Reprendre</button>
+      <button class="btn btn-secondary btn-sm" onclick="discardSaved()">Ignorer</button>
+    </div>
+  </div>
+
   <div class="card">
     <h2>⚙ Configuration de la Séance</h2>
     <div class="form-grid three">
       <div class="field">
-        <label>Distance piste (m)</label>
-        <input type="number" id="distPiste" value="400" min="50" step="10">
-      </div>
-      <div class="field">
-        <label>Distance entre plots (m)</label>
-        <input type="number" id="distPlots" value="25" min="5" step="5">
-      </div>
-      <div class="field">
-        <label>Séance du jour</label>
+        <label for="nomSeance">Séance du jour</label>
         <input type="text" id="nomSeance" placeholder="ex: Séance 3 — Aérobie">
+      </div>
+      <div class="field">
+        <label for="distPiste">Distance piste (m)</label>
+        <input type="number" id="distPiste" value="400" min="50" step="10" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="distPlots">Distance entre plots (m)</label>
+        <input type="number" id="distPlots" value="25" min="5" step="5" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="tolerance">Tolérance zone (± km/h)</label>
+        <input type="number" id="tolerance" value="0.5" min="0.1" max="3" step="0.1" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>Signaux sonores</label>
+        <div class="toggle-wrap" style="min-height:42px;">
+          <button type="button" class="toggle on" id="soundToggle" role="switch" aria-checked="true" aria-label="Signaux sonores" onclick="toggleSound()"></button>
+          <span style="font-size:0.8rem;color:var(--muted);">Bip à chaque changement de colonne et en fin de série</span>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="card">
     <h2>🏃 Séries</h2>
-    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:16px;">
-      Chaque série doit être un multiple de 1min30. Chaque tranche = 1 colonne de plots.
-    </p>
+    <p class="hint">Chaque série est un multiple de 1min30. Chaque tranche de 1min30 = 1 colonne de plots.</p>
     <div class="field" style="margin-bottom:16px;max-width:200px;">
-      <label>Nombre de séries</label>
-      <input type="number" id="nbSeries" value="3" min="1" max="10">
+      <label for="nbSeries">Nombre de séries</label>
+      <input type="number" id="nbSeries" value="3" min="1" max="10" inputmode="numeric">
     </div>
     <div id="seriesInputs"></div>
     <div class="actions">
-      <button class="btn btn-secondary" onclick="genSeries()">↺ Actualiser les séries</button>
       <button class="btn btn-primary" onclick="goStep2()">Suivant →</button>
     </div>
   </div>
@@ -401,66 +480,33 @@
 
 <!-- ════════════════ SCREEN 2 : PROFILS COUREURS ════════════════ -->
 <div class="screen" id="screen2">
-  <div class="runner-tabs">
-    <button class="runner-tab active" onclick="showRunnerSetup(0)">👤 Coureur 1</button>
-    <button class="runner-tab" onclick="showRunnerSetup(1)">👤 Coureur 2</button>
+  <div class="runner-tabs" role="tablist">
+    <button class="runner-tab active" role="tab" onclick="showRunnerSetup(0)" id="tab0">👤 Coureur 1</button>
+    <button class="runner-tab" role="tab" onclick="showRunnerSetup(1)" id="tab1">👤 Coureur 2</button>
   </div>
 
-  <div id="runner0Setup" class="runner-setup">
-    <div class="card">
-      <h2>Coureur 1 — Profil</h2>
-      <div class="form-grid">
-        <div class="field">
-          <label>Prénom</label>
-          <input type="text" id="r0name" placeholder="Prénom">
-        </div>
-        <div class="field">
-          <label>VMA (km/h)</label>
-          <input type="number" id="r0vma" value="14" step="0.5" min="6" max="25">
-        </div>
-      </div>
-    </div>
-    <div class="card" id="r0seriesProj">
-      <h2>Projets de vitesse — Coureur 1</h2>
-      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:14px;">Indiquez la vitesse cible en km/h pour chaque série.</p>
-      <div id="r0proj"></div>
-    </div>
-  </div>
+  <div id="runnerSetups"></div>
 
-  <div id="runner1Setup" class="runner-setup" style="display:none;">
-    <div class="card">
-      <h2>Coureur 2 — Profil</h2>
-      <div class="form-grid">
-        <div class="field">
-          <label>Prénom</label>
-          <input type="text" id="r1name" placeholder="Prénom">
-        </div>
-        <div class="field">
-          <label>VMA (km/h)</label>
-          <input type="number" id="r1vma" value="12" step="0.5" min="6" max="25">
-        </div>
-      </div>
-    </div>
-    <div class="card" id="r1seriesProj">
-      <h2>Projets de vitesse — Coureur 2</h2>
-      <p style="color:var(--muted);font-size:0.85rem;margin-bottom:14px;">Indiquez la vitesse cible en km/h pour chaque série.</p>
-      <div id="r1proj"></div>
-    </div>
+  <div class="card">
+    <h2>🏁 Qui court en premier ?</h2>
+    <select id="firstRunner" style="max-width:320px;">
+      <option value="0">Coureur 1</option>
+      <option value="1">Coureur 2</option>
+    </select>
   </div>
 
   <div class="actions">
-    <button class="btn btn-secondary" onclick="goStep(1)">← Retour</button>
+    <button class="btn btn-secondary" onclick="goStep(0)">← Retour</button>
     <button class="btn btn-primary" onclick="goStep3()">Suivant →</button>
   </div>
 </div>
 
 <!-- ════════════════ SCREEN 3 : COURSE ════════════════ -->
 <div class="screen" id="screen3">
-  <!-- Header coureur actif -->
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
     <div>
       <div class="current-runner-badge">
-        <div class="dot-live"></div>
+        <div class="dot-live" id="dotLive"></div>
         <span id="activeName">—</span>
       </div>
       <div style="color:var(--muted);font-size:0.8rem;" id="serieLabel">Série —</div>
@@ -470,22 +516,19 @@
     </div>
   </div>
 
-  <!-- Séries status -->
   <div id="seriesPills" class="series-status-list"></div>
 
   <div class="card">
-    <!-- Chrono -->
-    <div class="chrono-display" id="chronoDisplay">00:00</div>
+    <div class="chrono-display" id="chronoDisplay" aria-live="off">00:00</div>
     <div class="chrono-target" id="chronoTarget">Objectif : 00:00</div>
-    <div class="chrono-bar-wrap">
+    <div class="chrono-bar-wrap" id="chronoBarWrap">
       <div class="chrono-bar" id="chronoBar" style="width:0%"></div>
     </div>
 
-    <!-- Info boxes -->
     <div class="info-grid">
       <div class="info-box">
         <div class="val accent" id="dispVitMoy">—</div>
-        <div class="lbl">Vit. moy. col.</div>
+        <div class="lbl">Vit. colonne (km/h)</div>
       </div>
       <div class="info-box">
         <div class="val accent" id="dispVitCible">—</div>
@@ -495,36 +538,54 @@
         <div class="val accent" id="dispEcart">—</div>
         <div class="lbl">Écart (km/h)</div>
       </div>
+      <div class="info-box">
+        <div class="val accent" id="dispCol">—</div>
+        <div class="lbl">Colonne</div>
+      </div>
+      <div class="info-box">
+        <div class="val accent" id="dispPlots">—</div>
+        <div class="lbl">Plots col. / objectif</div>
+      </div>
+      <div class="info-box">
+        <div class="val accent" id="dispDist">—</div>
+        <div class="lbl">Distance (m)</div>
+      </div>
     </div>
 
-    <!-- Feedback -->
-    <div class="feedback-badge hidden" id="feedbackBadge">DANS LA ZONE</div>
+    <div class="feedback-badge hidden" id="feedbackBadge" aria-live="polite">DANS LA ZONE</div>
 
-    <!-- Boutons -->
     <div class="btn-plot-wrap">
-      <button class="btn-plot" id="btnPlot" onclick="clickPlot()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 8v4l3 3"/>
-        </svg>
+      <button class="btn-plot" id="btnPlot" onclick="clickPlot()" disabled aria-label="Passage au plot">
+        <span class="count" id="plotCount">0</span>
         PLOT
       </button>
     </div>
 
     <div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;">
-      <button class="btn-marche" id="btnMarche" onclick="toggleMarche()">🚶 MARCHE</button>
+      <button class="btn-marche" id="btnMarche" onclick="toggleMarche()" aria-pressed="false">🚶 MARCHE</button>
       <button class="btn btn-primary" id="btnStartStop" onclick="startStopSerie()">▶ DÉMARRER</button>
-      <button class="btn btn-warning" onclick="nextSerie()" id="btnNextSerie" style="display:none;">→ Série suivante</button>
+      <button class="btn btn-ghost btn-sm" id="btnUndo" onclick="undoPlot()" disabled>↶ Annuler plot</button>
+      <button class="btn btn-ghost btn-sm" id="btnReset" onclick="resetSerie()">⟲ Recommencer</button>
     </div>
+
+    <div class="serie-end" id="serieEnd" hidden>
+      <p>✓ Série terminée</p>
+      <div class="actions">
+        <button class="btn btn-primary" id="btnEndSwitch" onclick="switchRunner()">↔ Au tour de …</button>
+        <button class="btn btn-warning" id="btnNextSerie" onclick="nextSerie()">→ Série suivante</button>
+      </div>
+    </div>
+
+    <div class="kbd-hint">Clavier : <kbd>Espace</kbd> plot · <kbd>M</kbd> marche · <kbd>Z</kbd> annuler · <kbd>P</kbd> départ/pause</div>
   </div>
 
-  <!-- Tableau passages -->
   <div class="card">
     <h3>Tableau des passages</h3>
     <div class="table-wrap" id="tableWrap"></div>
   </div>
 
   <div class="actions">
+    <button class="btn btn-secondary" onclick="backToProfiles()">← Profils</button>
     <button class="btn btn-success" onclick="goStep4()">✓ Terminer la séance</button>
   </div>
 </div>
@@ -536,583 +597,855 @@
     <div id="resultsContent"></div>
   </div>
   <div class="actions">
+    <button class="btn btn-secondary" onclick="goStep(2)">← Retour à la course</button>
     <button class="btn btn-primary" onclick="exportCSV()">⬇ Exporter CSV</button>
     <button class="btn btn-secondary" onclick="exportXLS()">⬇ Exporter Excel</button>
-    <button class="btn btn-secondary" onclick="location.reload()">↺ Nouvelle séance</button>
+    <button class="btn btn-secondary" onclick="newSession()">↺ Nouvelle séance</button>
   </div>
 </div>
 
 <script>
+'use strict';
 // ══════════════════════════════════════════════════════════
-//  STATE
+//  CONSTANTES & ÉTAT
 // ══════════════════════════════════════════════════════════
+const COL_MS = 90000;            // 1 colonne = 1min30
+const MAX_BLOCKS = 20;           // série max = 30 min
+const STORAGE_KEY = 'vmaTracker.session.v2';
+
 const S = {
+  step: 0,
   distPiste: 400,
   distPlots: 25,
   nomSeance: '',
-  series: [],        // [{dureeMin, dureeMs, nbCols}]
+  tolerance: 0.5,
+  sound: true,
+  series: [],        // [{dureeMs, nbCols}]
   runners: [
     { name:'Coureur 1', vma:14, projets:[] },
     { name:'Coureur 2', vma:12, projets:[] }
   ],
-  // course state
-  activeRunner: 0,   // 0 ou 1
+  activeRunner: 0,
   currentSerieIdx: 0,
-  // données par coureur/serie: data[runnerIdx][serieIdx] = { passages:[], marcheSet:Set, columnStarts:[] }
-  data: [ [], [] ],
-  // chrono
+  // data[runner][serie] = { passages:[{t, marche}], elapsed, done }
+  data: [[], []],
+  // état non persisté
   chronoInterval: null,
-  chronoStart: null,
-  chronoElapsed: 0,
+  chronoStart: 0,
   chronoRunning: false,
-  chronoFinished: false,
-  // click state
-  plotCount: 0,      // clicks in current column
-  colCount: 0,       // which column
   marcheNext: false,
-  columnStartTime: 0, // ms when current column started
+  lastSave: 0,
 };
 
-function durToMs(m,s){ return (m*60+s)*1000; }
+const $ = id => document.getElementById(id);
+
+// ══════════════════════════════════════════════════════════
+//  UTILITAIRES
+// ══════════════════════════════════════════════════════════
+function esc(v){
+  return String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fr(n, d=1){ return Number(n).toFixed(d).replace('.', ','); }
 function msToDurStr(ms){
   const t = Math.floor(ms/1000);
   const m = Math.floor(t/60), s = t%60;
   return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
 }
+function emptySerieData(){ return { passages:[], elapsed:0, done:false }; }
+function cur(){ return S.data[S.activeRunner][S.currentSerieIdx]; }
+function colOf(t, serie){ return Math.min(Math.floor(t/COL_MS), serie.nbCols-1); }
+
+/** Nombre de plots théoriques franchis en 1min30 à la vitesse v (km/h). */
+function plotsPerCol(v){ return (COL_MS/1000) * (v/3.6) / S.distPlots; }
+
+/** Vitesse (km/h) à partir d'un nombre de plots sur une durée en ms. */
+function speedKmh(nbPlots, ms){ return ms > 0 ? nbPlots*S.distPlots/(ms/1000)*3.6 : null; }
+
+/** Durée effectivement courue dans la colonne c. */
+function colDuration(d, c){ return Math.max(0, Math.min(COL_MS, d.elapsed - c*COL_MS)); }
+
+function zoneOf(ecart){
+  if(Math.abs(ecart) <= S.tolerance) return 'ok';
+  return ecart > 0 ? 'fast' : 'slow';
+}
+const ZONE_LABEL = { ok:'✓ DANS LA ZONE', fast:'⚡ TROP RAPIDE', slow:'🐢 TROP LENT' };
+const ZONE_COLOR = { ok:'green', fast:'red', slow:'yellow' };
+
+function serieStats(r, si){
+  const serie = S.series[si], d = S.data[r][si];
+  const cible = S.runners[r].projets[si];
+  const cols = [];
+  for(let c=0;c<serie.nbCols;c++){
+    const n = d.passages.filter(p=>colOf(p.t, serie)===c).length;
+    const dur = colDuration(d, c);
+    cols.push({ n, dur, vit: dur>0 ? speedKmh(n, dur) : null });
+  }
+  const nb = d.passages.length;
+  const dist = nb*S.distPlots;
+  const vit = speedKmh(nb, d.elapsed);
+  const ecart = vit!==null ? vit-cible : null;
+  return {
+    serie, d, cible, cols, nb, dist, vit, ecart,
+    zone: ecart!==null ? zoneOf(ecart) : null,
+    marches: d.passages.filter(p=>p.marche).length,
+    pctVma: Math.round(cible/S.runners[r].vma*100),
+  };
+}
 
 // ══════════════════════════════════════════════════════════
-//  SCREEN NAV
+//  SONS / VIBRATIONS / VEILLE ÉCRAN
+// ══════════════════════════════════════════════════════════
+let audioCtx = null;
+function beep(freq=880, dur=0.15, times=1){
+  if(!S.sound) return;
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    for(let i=0;i<times;i++){
+      const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+      o.frequency.value=freq; o.connect(g); g.connect(audioCtx.destination);
+      const t0=audioCtx.currentTime+i*(dur+0.08);
+      g.gain.setValueAtTime(0.25,t0);
+      g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+      o.start(t0); o.stop(t0+dur);
+    }
+  }catch(e){}
+}
+function vibrate(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+
+let wakeLock = null;
+async function requestWakeLock(){
+  try{
+    if('wakeLock' in navigator && !wakeLock){
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release',()=>{ wakeLock=null; });
+    }
+  }catch(e){}
+}
+function releaseWakeLock(){ try{ wakeLock && wakeLock.release(); }catch(e){} wakeLock=null; }
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible' && S.step===2) requestWakeLock();
+});
+
+function toggleSound(){
+  S.sound=!S.sound;
+  $('soundToggle').classList.toggle('on',S.sound);
+  $('soundToggle').setAttribute('aria-checked',S.sound);
+  save();
+}
+
+// ══════════════════════════════════════════════════════════
+//  SAUVEGARDE LOCALE (protection contre un rechargement)
+// ══════════════════════════════════════════════════════════
+function save(){
+  if(S.step===0) return;
+  S.lastSave=Date.now();
+  const {step,distPiste,distPlots,nomSeance,tolerance,sound,series,runners,activeRunner,currentSerieIdx,data}=S;
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({step,distPiste,distPlots,nomSeance,tolerance,sound,series,runners,activeRunner,currentSerieIdx,data,savedAt:Date.now()}));
+  }catch(e){}
+}
+function loadSaved(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){ return null; }
+}
+function clearSaved(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} }
+
+function resumeSaved(){
+  const saved=loadSaved();
+  if(!saved){ $('resumeBanner').hidden=true; return; }
+  ['step','distPiste','distPlots','nomSeance','tolerance','sound','series','runners','activeRunner','currentSerieIdx','data']
+    .forEach(k=>{ if(saved[k]!==undefined) S[k]=saved[k]; });
+  // champs écran 1
+  $('nomSeance').value=S.nomSeance;
+  $('distPiste').value=S.distPiste;
+  $('distPlots').value=S.distPlots;
+  $('tolerance').value=S.tolerance;
+  $('soundToggle').classList.toggle('on',S.sound);
+  $('nbSeries').value=S.series.length;
+  genSeries(S.series.map(s=>s.nbCols));
+  buildRunnerSetups();
+  $('firstRunner').value=S.activeRunner;
+  $('resumeBanner').hidden=true;
+  const step=S.step;
+  if(step>=2) initCourse();
+  if(step===3) renderResults();
+  goStep(step);
+}
+function discardSaved(){ clearSaved(); $('resumeBanner').hidden=true; }
+
+function newSession(){
+  if(!confirm('Démarrer une nouvelle séance ? Les données non exportées seront perdues.')) return;
+  clearSaved();
+  location.reload();
+}
+
+// ══════════════════════════════════════════════════════════
+//  NAVIGATION
 // ══════════════════════════════════════════════════════════
 function goStep(n){
+  if(S.chronoRunning) pauseChrono();
+  S.step=n;
   document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
-  document.getElementById('screen'+(n+1)).classList.add('active');
+  $('screen'+(n+1)).classList.add('active');
   document.querySelectorAll('.step-dot').forEach((d,i)=>{
     d.classList.toggle('active', i===n);
     d.classList.toggle('done', i<n);
   });
+  if(n===2) requestWakeLock(); else releaseWakeLock();
   window.scrollTo(0,0);
+  save();
 }
 
 // ══════════════════════════════════════════════════════════
-//  STEP 1 : séries
+//  ÉTAPE 1 : SÉRIES
 // ══════════════════════════════════════════════════════════
-function genSeries(){
-  const nb = parseInt(document.getElementById('nbSeries').value)||3;
-  const wrap = document.getElementById('seriesInputs');
-  wrap.innerHTML='';
+function currentBlocks(){
+  return [...document.querySelectorAll('#seriesInputs select')].map(s=>parseInt(s.value)||1);
+}
+
+function genSeries(blocks){
+  const nb = Math.max(1, Math.min(10, parseInt($('nbSeries').value)||3));
+  $('nbSeries').value = nb;
+  const prev = blocks || currentBlocks();
+  let html='';
   for(let i=0;i<nb;i++){
-    const prev = S.series[i];
-    const defMin = prev ? Math.floor(prev.dureeMs/60000) : (i+1)*3;
-    const defSec = prev ? Math.floor((prev.dureeMs%60000)/1000) : 0;
-    wrap.innerHTML+=`
+    const def = prev[i] || prev[prev.length-1] || 2;
+    let opts='';
+    for(let b=1;b<=MAX_BLOCKS;b++){
+      opts+=`<option value="${b}" ${b===def?'selected':''}>${msToDurStr(b*COL_MS)}</option>`;
+    }
+    html+=`
     <div class="series-row">
       <span class="series-label">SÉRIE ${i+1}</span>
-      <div class="field" style="flex:1">
-        <label>Minutes</label>
-        <input type="number" id="sm${i}" value="${defMin}" min="1" step="1">
+      <div class="field" style="flex:1;min-width:140px;">
+        <label for="sdur${i}">Durée</label>
+        <select id="sdur${i}">${opts}</select>
       </div>
-      <div class="field" style="flex:1">
-        <label>Secondes (multiple de 30)</label>
-        <select id="ss${i}">
-          <option value="0" ${defSec===0?'selected':''}>00</option>
-          <option value="30" ${defSec===30?'selected':''}>30</option>
-        </select>
-      </div>
-      <div style="font-size:0.7rem;color:var(--muted);min-width:80px;" id="sinfo${i}"></div>
+      <div class="series-info" id="sinfo${i}"></div>
     </div>`;
   }
-  // live preview
+  $('seriesInputs').innerHTML=html;
   for(let i=0;i<nb;i++){
-    ['sm','ss'].forEach(p=>{
-      document.getElementById(p+i).addEventListener('input',()=>updateSerieInfo(i,nb));
-    });
-    updateSerieInfo(i,nb);
+    $('sdur'+i).addEventListener('change',()=>updateSerieInfo(i));
+    updateSerieInfo(i);
   }
 }
 
-function updateSerieInfo(i,nb){
-  const m = parseInt(document.getElementById('sm'+i).value)||0;
-  const s = parseInt(document.getElementById('ss'+i).value)||0;
-  const totalMs = (m*60+s)*1000;
-  const colDur = 90000; // 1min30
-  const cols = totalMs/colDur;
-  const el = document.getElementById('sinfo'+i);
-  if(el) el.textContent = Number.isInteger(cols) ? `${cols} col.` : `⚠ Non multiple de 1:30`;
+function updateSerieInfo(i){
+  const b=parseInt($('sdur'+i).value)||1;
+  $('sinfo'+i).textContent = `${b} colonne${b>1?'s':''}`;
 }
 
 function goStep2(){
-  const nb = parseInt(document.getElementById('nbSeries').value)||3;
-  const series=[];
-  for(let i=0;i<nb;i++){
-    const m=parseInt(document.getElementById('sm'+i).value)||0;
-    const s=parseInt(document.getElementById('ss'+i).value)||0;
-    const ms=(m*60+s)*1000;
-    if(ms<=0){alert(`Série ${i+1} : durée invalide`);return;}
-    if(ms%90000!==0){alert(`Série ${i+1} : durée doit être multiple de 1min30`);return;}
-    series.push({dureeMs:ms, nbCols:ms/90000});
+  const distPiste=parseFloat($('distPiste').value);
+  const distPlots=parseFloat($('distPlots').value);
+  const tol=parseFloat($('tolerance').value);
+  if(!(distPlots>0)){ alert('Distance entre plots invalide.'); $('distPlots').focus(); return; }
+  if(!(distPiste>0)){ alert('Distance de piste invalide.'); $('distPiste').focus(); return; }
+  if(!(tol>0)){ alert('Tolérance invalide.'); $('tolerance').focus(); return; }
+
+  const blocks=currentBlocks();
+  const newSeries=blocks.map(b=>({dureeMs:b*COL_MS, nbCols:b}));
+
+  // Si la séance a déjà des passages et que la structure change, prévenir.
+  const hasData=S.data.some(rd=>rd.some(d=>d && d.passages.length>0));
+  const changed=JSON.stringify(newSeries)!==JSON.stringify(S.series) || distPlots!==S.distPlots;
+  if(hasData && changed && !confirm('Modifier les séries ou les plots efface les passages déjà saisis. Continuer ?')) return;
+
+  S.distPiste=distPiste;
+  S.distPlots=distPlots;
+  S.tolerance=tol;
+  S.nomSeance=$('nomSeance').value.trim()||'Séance';
+  if(!hasData || changed){
+    S.series=newSeries;
+    S.data=[0,1].map(()=>S.series.map(emptySerieData));
   }
-  S.series=series;
-  S.distPiste=parseInt(document.getElementById('distPiste').value)||400;
-  S.distPlots=parseInt(document.getElementById('distPlots').value)||25;
-  S.nomSeance=document.getElementById('nomSeance').value||'Séance';
-  // Init data
-  S.data=[[],[]];
-  for(let r=0;r<2;r++){
-    for(let i=0;i<nb;i++) S.data[r].push({passages:[],marcheSet:new Set(),colStarts:[]});
-  }
-  // build projets inputs
-  buildProjInputs();
+  buildRunnerSetups();
   goStep(1);
 }
 
-function buildProjInputs(){
+// ══════════════════════════════════════════════════════════
+//  ÉTAPE 2 : PROFILS COUREURS
+// ══════════════════════════════════════════════════════════
+function buildRunnerSetups(){
+  // conserver les saisies en cours
   for(let r=0;r<2;r++){
-    const wrap = document.getElementById('r'+r+'proj');
-    wrap.innerHTML='';
-    S.series.forEach((s,i)=>{
-      const prev = S.runners[r].projets[i];
-      const def = prev||'';
-      wrap.innerHTML+=`
-      <div class="series-row">
-        <span class="series-label">S${i+1}</span>
-        <div style="color:var(--muted);font-size:0.8rem;min-width:80px;">${msToDurStr(s.dureeMs)}</div>
-        <div class="field" style="flex:1">
-          <label>Vitesse cible (km/h)</label>
-          <input type="number" id="r${r}p${i}" value="${def}" step="0.1" min="4" max="30" placeholder="ex: 11.5">
+    if($('r'+r+'name')){
+      S.runners[r].name=$('r'+r+'name').value.trim()||S.runners[r].name;
+      S.runners[r].vma=parseFloat($('r'+r+'vma').value)||S.runners[r].vma;
+      S.runners[r].projets=S.series.map((_,i)=>{ const el=$('r'+r+'p'+i); return el?parseFloat(el.value)||'':S.runners[r].projets[i]; });
+    }
+  }
+  const active = document.querySelector('.runner-tab.active');
+  const activeIdx = active ? parseInt(active.id.slice(3)) : 0;
+  let html='';
+  for(let r=0;r<2;r++){
+    const R=S.runners[r];
+    const defName = /^Coureur \d$/.test(R.name) ? '' : R.name;
+    html+=`
+    <div id="runner${r}Setup" class="runner-setup" style="display:${r===activeIdx?'block':'none'};">
+      <div class="card">
+        <h2>Coureur ${r+1} — Profil</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label for="r${r}name">Prénom</label>
+            <input type="text" id="r${r}name" placeholder="Prénom" value="${esc(defName)}" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="r${r}vma">VMA (km/h)</label>
+            <input type="number" id="r${r}vma" value="${R.vma}" step="0.5" min="6" max="25" inputmode="decimal">
+          </div>
         </div>
-        <div style="font-size:0.7rem;color:var(--muted);min-width:60px;" id="r${r}ppct${i}"></div>
-      </div>`;
+      </div>
+      <div class="card">
+        <h2>Projets de vitesse — <span class="rname${r}">${esc(R.name)}</span></h2>
+        <p class="hint">Indiquez la vitesse cible pour chaque série, ou remplissez d'un coup avec un % de VMA.</p>
+        <div class="series-row" style="background:transparent;border:1px dashed var(--border);">
+          <span style="font-size:0.8rem;color:var(--muted);">Remplir toutes les séries à</span>
+          <input type="number" id="r${r}pctAll" value="80" min="50" max="120" step="5" style="width:90px;" inputmode="numeric">
+          <span style="font-size:0.8rem;color:var(--muted);">% VMA</span>
+          <button class="btn btn-secondary btn-sm" onclick="fillPct(${r})">Appliquer</button>
+        </div>`;
+    S.series.forEach((s,i)=>{
+      const def=R.projets[i]||'';
+      html+=`
+        <div class="series-row">
+          <span class="series-label">S${i+1}</span>
+          <div style="color:var(--muted);font-size:0.8rem;min-width:50px;">${msToDurStr(s.dureeMs)}</div>
+          <div class="field" style="flex:1;min-width:140px;">
+            <label for="r${r}p${i}">Vitesse cible (km/h)</label>
+            <input type="number" id="r${r}p${i}" value="${def}" step="0.1" min="4" max="30" placeholder="ex: 11.5" inputmode="decimal">
+          </div>
+          <div class="series-info" id="r${r}pinfo${i}"></div>
+        </div>`;
     });
-    // % VMA preview
+    html+=`</div></div>`;
+  }
+  $('runnerSetups').innerHTML=html;
+
+  for(let r=0;r<2;r++){
+    $('r'+r+'vma').addEventListener('input',()=>S.series.forEach((_,i)=>updateProjInfo(r,i)));
+    $('r'+r+'name').addEventListener('input',()=>updateRunnerNames());
     S.series.forEach((_,i)=>{
-      const el = document.getElementById('r'+r+'p'+i);
-      el.addEventListener('input',()=>updateVmaPct(r,i));
-      updateVmaPct(r,i);
+      $('r'+r+'p'+i).addEventListener('input',()=>updateProjInfo(r,i));
+      updateProjInfo(r,i);
     });
+  }
+  updateRunnerNames();
+}
+
+function fillPct(r){
+  const vma=parseFloat($('r'+r+'vma').value)||0;
+  const pct=parseFloat($('r'+r+'pctAll').value)||0;
+  if(!(vma>0&&pct>0)) return;
+  S.series.forEach((_,i)=>{
+    $('r'+r+'p'+i).value=(Math.round(vma*pct/100*10)/10);
+    updateProjInfo(r,i);
+  });
+}
+
+function updateRunnerNames(){
+  for(let r=0;r<2;r++){
+    const n=$('r'+r+'name').value.trim()||('Coureur '+(r+1));
+    $('tab'+r).textContent='👤 '+n;
+    document.querySelectorAll('.rname'+r).forEach(e=>e.textContent=n);
+    $('firstRunner').options[r].textContent=n;
   }
 }
 
-function updateVmaPct(r,i){
-  const vma=parseFloat(document.getElementById('r'+r+'vma').value)||0;
-  const v=parseFloat(document.getElementById('r'+r+'p'+i).value)||0;
-  const el=document.getElementById('r'+r+'ppct'+i);
-  if(el&&vma>0&&v>0) el.textContent=Math.round(v/vma*100)+'% VMA';
-  else if(el) el.textContent='';
+function updateProjInfo(r,i){
+  const vma=parseFloat($('r'+r+'vma').value)||0;
+  const v=parseFloat($('r'+r+'p'+i).value)||0;
+  const el=$('r'+r+'pinfo'+i);
+  if(!el) return;
+  const parts=[];
+  if(vma>0&&v>0) parts.push(Math.round(v/vma*100)+'% VMA');
+  if(v>0) parts.push('≈ '+fr(plotsPerCol(v))+' plots/1:30');
+  el.textContent=parts.join(' · ');
 }
 
 function showRunnerSetup(r){
   document.querySelectorAll('.runner-setup').forEach(e=>e.style.display='none');
-  document.getElementById('runner'+r+'Setup').style.display='block';
+  $('runner'+r+'Setup').style.display='block';
   document.querySelectorAll('.runner-tab').forEach((t,i)=>t.classList.toggle('active',i===r));
 }
 
 function goStep3(){
-  // save runner profiles
+  const runners=[];
   for(let r=0;r<2;r++){
-    S.runners[r].name=document.getElementById('r'+r+'name').value||'Coureur '+(r+1);
-    S.runners[r].vma=parseFloat(document.getElementById('r'+r+'vma').value)||14;
-    S.runners[r].projets=[];
+    const name=$('r'+r+'name').value.trim()||('Coureur '+(r+1));
+    const vma=parseFloat($('r'+r+'vma').value);
+    if(!(vma>=4&&vma<=30)){ showRunnerSetup(r); alert(`${name} : VMA invalide.`); $('r'+r+'vma').focus(); return; }
+    const projets=[];
     for(let i=0;i<S.series.length;i++){
-      const v=parseFloat(document.getElementById('r'+r+'p'+i).value)||0;
-      if(v<=0){alert(`${S.runners[r].name} : vitesse cible série ${i+1} manquante`);return;}
-      S.runners[r].projets.push(v);
+      const el=$('r'+r+'p'+i);
+      const v=parseFloat(el.value);
+      if(!(v>0)){ showRunnerSetup(r); alert(`${name} : vitesse cible de la série ${i+1} manquante.`); el.focus(); return; }
+      projets.push(v);
     }
+    runners.push({name,vma,projets});
   }
-  // ask who starts
-  const names=[S.runners[0].name,S.runners[1].name];
-  const choice=confirm(`Qui commence ?\n\nOK → ${names[0]}\nAnnuler → ${names[1]}`);
-  S.activeRunner=choice?0:1;
-  S.currentSerieIdx=0;
+  S.runners=runners;
+  // Lors du premier passage, choisir le coureur et la première série à faire.
+  const started=S.data.some(rd=>rd.some(d=>d.passages.length>0||d.elapsed>0));
+  if(!started){
+    S.activeRunner=parseInt($('firstRunner').value)||0;
+    S.currentSerieIdx=0;
+  }
   initCourse();
   goStep(2);
 }
 
+function backToProfiles(){
+  if(S.chronoRunning){ alert('Mettez le chrono en pause avant de quitter la course.'); return; }
+  buildRunnerSetups();
+  goStep(1);
+}
+
 // ══════════════════════════════════════════════════════════
-//  COURSE INIT
+//  COURSE
 // ══════════════════════════════════════════════════════════
 function initCourse(){
+  stopInterval();
   S.chronoRunning=false;
-  S.chronoFinished=false;
-  S.plotCount=0;
-  S.colCount=0;
   S.marcheNext=false;
-  clearInterval(S.chronoInterval);
-  S.chronoInterval=null;
   renderCourseUI();
 }
 
+function stopInterval(){ clearInterval(S.chronoInterval); S.chronoInterval=null; }
+
 function renderCourseUI(){
-  const r=S.activeRunner;
-  const si=S.currentSerieIdx;
-  const runner=S.runners[r];
-  const serie=S.series[si];
+  const r=S.activeRunner, si=S.currentSerieIdx;
+  const runner=S.runners[r], serie=S.series[si], d=cur();
+  const other=S.runners[1-r];
 
-  document.getElementById('activeName').textContent=runner.name+' — S'+(si+1);
-  document.getElementById('serieLabel').textContent=
-    `Série ${si+1}/${S.series.length} · ${msToDurStr(serie.dureeMs)} · Cible: ${runner.projets[si]} km/h`;
+  $('activeName').textContent=runner.name+' — S'+(si+1);
+  $('serieLabel').textContent=`Série ${si+1}/${S.series.length} · ${msToDurStr(serie.dureeMs)} · Cible : ${fr(runner.projets[si])} km/h (≈ ${fr(plotsPerCol(runner.projets[si]))} plots/col.)`;
 
-  // pills
-  const pills=document.getElementById('seriesPills');
+  // pastilles des séries
+  const pills=$('seriesPills');
   pills.innerHTML='';
   S.series.forEach((_,i)=>{
-    const d0=S.data[0][i].passages.length>0;
-    const d1=S.data[1][i].passages.length>0;
+    const st=[0,1].map(k=>{
+      const dd=S.data[k][i];
+      return dd.done?'✓':(dd.passages.length||dd.elapsed)?'◐':'·';
+    });
     const pill=document.createElement('div');
-    pill.className='series-pill'+(i===si?' active':(d0||d1?' done':''));
-    pill.textContent='S'+(i+1)+(d0?' ✓₁':'')+(d1?' ✓₂':'');
+    const allDone=S.data[0][i].done&&S.data[1][i].done;
+    pill.className='series-pill'+(i===si?' active':(allDone?' done':''));
+    pill.title=`${S.runners[0].name} ${st[0]} — ${S.runners[1].name} ${st[1]}`;
+    pill.textContent=`S${i+1} ${st[0]}${st[1]}`;
     pills.appendChild(pill);
   });
 
-  // cible
-  document.getElementById('dispVitCible').textContent=runner.projets[si]+' km/h';
-  document.getElementById('dispVitMoy').textContent='—';
-  document.getElementById('dispEcart').textContent='—';
-  document.getElementById('feedbackBadge').className='feedback-badge hidden';
+  // graduation colonnes sur la barre
+  const wrap=$('chronoBarWrap');
+  wrap.querySelectorAll('.chrono-tick').forEach(e=>e.remove());
+  for(let c=1;c<serie.nbCols;c++){
+    const t=document.createElement('div');
+    t.className='chrono-tick';
+    t.style.left=(c/serie.nbCols*100)+'%';
+    wrap.appendChild(t);
+  }
 
-  // chrono reset
-  S.chronoElapsed=0;
-  updateChronoDisplay(0,serie.dureeMs);
-  document.getElementById('chronoBar').style.width='0%';
-  document.getElementById('chronoTarget').textContent='Objectif : '+msToDurStr(serie.dureeMs);
+  $('dispVitCible').textContent=fr(runner.projets[si]);
+  $('btnEndSwitch').textContent='↔ Au tour de '+other.name;
+  $('btnMarche').classList.remove('active');
+  $('btnMarche').setAttribute('aria-pressed','false');
 
-  // boutons
-  document.getElementById('btnStartStop').textContent='▶ DÉMARRER';
-  document.getElementById('btnStartStop').className='btn btn-primary';
-  document.getElementById('btnNextSerie').style.display='none';
-  document.getElementById('btnMarche').classList.remove('active');
-  document.getElementById('btnPlot').style.opacity='0.4';
-  document.getElementById('btnPlot').style.pointerEvents='none';
-  document.getElementById('btnSwitch').disabled=S.chronoRunning;
-
-  // reset col/plot counts for this serie
-  S.plotCount=0;
-  S.colCount=0;
-  S.marcheNext=false;
-
+  updateChrono();
+  updateLiveStats();
+  updateControls();
   renderTable();
 }
 
-// ══════════════════════════════════════════════════════════
-//  CHRONO
-// ══════════════════════════════════════════════════════════
+function updateControls(){
+  const d=cur();
+  const running=S.chronoRunning;
+  const bss=$('btnStartStop');
+  if(running){ bss.textContent='⏸ PAUSE'; bss.className='btn btn-danger'; }
+  else if(d.elapsed>0){ bss.textContent='▶ REPRENDRE'; bss.className='btn btn-primary'; }
+  else { bss.textContent='▶ DÉMARRER'; bss.className='btn btn-primary'; }
+  bss.style.display=d.done?'none':'';
+  $('btnPlot').disabled=!running;
+  $('btnMarche').disabled=!running;
+  $('btnUndo').disabled=d.passages.length===0;
+  $('btnReset').disabled=running||(d.elapsed===0&&d.passages.length===0);
+  $('btnSwitch').disabled=running;
+  $('dotLive').classList.toggle('on',running);
+  $('serieEnd').hidden=!d.done;
+  $('btnNextSerie').style.display=nextSerieIdx(S.activeRunner, S.currentSerieIdx)!==null?'':'none';
+}
+
+// ── Chrono ──
 function startStopSerie(){
-  if(S.chronoFinished){
-    finishSerie();
-    return;
+  const d=cur();
+  if(d.done) return;
+  if(S.chronoRunning){ pauseChrono(); return; }
+  S.chronoRunning=true;
+  S.chronoStart=Date.now()-d.elapsed;
+  beep(1046,0.12);
+  requestWakeLock();
+  S.chronoInterval=setInterval(tick,100);
+  updateControls();
+  save();
+}
+
+function pauseChrono(){
+  const d=cur();
+  if(S.chronoRunning) d.elapsed=Math.min(Date.now()-S.chronoStart, S.series[S.currentSerieIdx].dureeMs);
+  stopInterval();
+  S.chronoRunning=false;
+  updateChrono();
+  updateControls();
+  save();
+}
+
+function tick(){
+  const d=cur(), serie=S.series[S.currentSerieIdx];
+  const prevCol=colOf(d.elapsed,serie);
+  d.elapsed=Math.min(Date.now()-S.chronoStart, serie.dureeMs);
+  if(d.elapsed>=serie.dureeMs){ endSerie(); return; }
+  if(colOf(d.elapsed,serie)!==prevCol){
+    beep(660,0.12,2); vibrate([80,60,80]);
+    updateLiveStats();
+    renderTable();
   }
-  if(!S.chronoRunning){
-    // START
-    S.chronoRunning=true;
-    S.chronoStart=Date.now()-S.chronoElapsed;
-    if(S.colCount===0 && S.plotCount===0){
-      S.data[S.activeRunner][S.currentSerieIdx].colStarts.push(0);
-      S.columnStartTime=0;
-    }
-    document.getElementById('btnStartStop').textContent='⏸ PAUSE';
-    document.getElementById('btnStartStop').className='btn btn-danger';
-    document.getElementById('btnPlot').style.opacity='1';
-    document.getElementById('btnPlot').style.pointerEvents='auto';
-    document.getElementById('btnSwitch').disabled=true;
-
-    S.chronoInterval=setInterval(()=>{
-      S.chronoElapsed=Date.now()-S.chronoStart;
-      const serie=S.series[S.currentSerieIdx];
-      updateChronoDisplay(S.chronoElapsed,serie.dureeMs);
-      const pct=Math.min(S.chronoElapsed/serie.dureeMs*100,100);
-      const bar=document.getElementById('chronoBar');
-      bar.style.width=pct+'%';
-      bar.style.background=pct>95?'var(--red)':pct>80?'var(--yellow)':'var(--accent)';
-      if(S.chronoElapsed>=serie.dureeMs){
-        clearInterval(S.chronoInterval);
-        S.chronoRunning=false;
-        S.chronoFinished=true;
-        S.chronoElapsed=serie.dureeMs;
-        updateChronoDisplay(serie.dureeMs,serie.dureeMs);
-        document.getElementById('btnStartStop').textContent='✓ TERMINER LA SÉRIE';
-        document.getElementById('btnStartStop').className='btn btn-success';
-        document.getElementById('btnPlot').style.opacity='0.4';
-        document.getElementById('btnPlot').style.pointerEvents='none';
-      }
-    },100);
-  } else {
-    // PAUSE
-    clearInterval(S.chronoInterval);
-    S.chronoRunning=false;
-    document.getElementById('btnStartStop').textContent='▶ REPRENDRE';
-    document.getElementById('btnStartStop').className='btn btn-primary';
-    document.getElementById('btnPlot').style.opacity='0.4';
-    document.getElementById('btnPlot').style.pointerEvents='none';
-  }
+  updateChrono();
+  if(Date.now()-S.lastSave>2000) save();
 }
 
-function updateChronoDisplay(ms,totalMs){
-  document.getElementById('chronoDisplay').textContent=msToDurStr(ms);
+function endSerie(){
+  const d=cur(), serie=S.series[S.currentSerieIdx];
+  stopInterval();
+  S.chronoRunning=false;
+  d.elapsed=serie.dureeMs;
+  d.done=true;
+  S.marcheNext=false;
+  beep(880,0.5); vibrate([300,100,300]);
+  renderCourseUI();
+  save();
 }
 
-function finishSerie(){
-  S.chronoFinished=false;
-  document.getElementById('btnNextSerie').style.display='inline-flex';
-  document.getElementById('btnSwitch').disabled=false;
+/** Série terminée : le badge affiche le verdict sur l'ensemble de la série. */
+function showSerieVerdict(){
+  const st=serieStats(S.activeRunner,S.currentSerieIdx);
+  const fb=$('feedbackBadge');
+  if(!st.zone){ fb.className='feedback-badge hidden'; return; }
+  fb.className='feedback-badge '+st.zone;
+  fb.textContent=`Série : ${fr(st.vit)} km/h — ${ZONE_LABEL[st.zone]}`;
 }
 
-// ══════════════════════════════════════════════════════════
-//  PLOT CLICK
-// ══════════════════════════════════════════════════════════
+function updateChrono(){
+  const d=cur(), serie=S.series[S.currentSerieIdx];
+  $('chronoDisplay').textContent=msToDurStr(d.elapsed);
+  const reste=serie.dureeMs-d.elapsed;
+  $('chronoTarget').textContent=d.done
+    ? `Terminé · ${msToDurStr(serie.dureeMs)}`
+    : `Reste ${msToDurStr(Math.ceil(reste/1000)*1000)} · Objectif ${msToDurStr(serie.dureeMs)}`;
+  const pct=Math.min(d.elapsed/serie.dureeMs*100,100);
+  const bar=$('chronoBar');
+  bar.style.width=pct+'%';
+  bar.style.background=d.done?'var(--green)':pct>95?'var(--red)':pct>80?'var(--yellow)':'var(--accent)';
+}
+
+// ── Plots ──
 function toggleMarche(){
+  if(!S.chronoRunning) return;
   S.marcheNext=!S.marcheNext;
-  document.getElementById('btnMarche').classList.toggle('active',S.marcheNext);
+  $('btnMarche').classList.toggle('active',S.marcheNext);
+  $('btnMarche').setAttribute('aria-pressed',S.marcheNext);
 }
 
 function clickPlot(){
   if(!S.chronoRunning) return;
-  const now=S.chronoElapsed;
-  const r=S.activeRunner, si=S.currentSerieIdx;
-  const d=S.data[r][si];
-  const serie=S.series[si];
-  const nbCols=serie.nbCols;
-
-  // How many plots fit in 1:30 at 25m per plot with given target speed?
-  // Mais : chaque colonne = 1min30. On compte les passages dans la colonne courante.
-  // Un passage = un clic = 25m
-  // temps théorique pour 25m à vitesse cible: 25/vit_ms
-  const vitCible=S.runners[r].projets[si]; // km/h
-  const vitMs=vitCible/3.6; // m/s
-  const tempsPlot=S.distPlots/vitMs*1000; // ms pour traverser 25m
-  const plotsParCol=Math.round(90000/tempsPlot); // plots par colonne de 1:30
-
-  d.passages.push({t:now, col:S.colCount, marcheNext:S.marcheNext});
-  if(S.marcheNext){ d.marcheSet.add(d.passages.length-1); }
+  const d=cur();
+  // horodatage exact au moment du clic (pas celui du dernier tick)
+  d.elapsed=Math.min(Date.now()-S.chronoStart, S.series[S.currentSerieIdx].dureeMs);
+  d.passages.push({t:d.elapsed, marche:S.marcheNext});
   S.marcheNext=false;
-  document.getElementById('btnMarche').classList.remove('active');
-
-  S.plotCount++;
-  // Check if we need to advance column (1 col = 1min30)
-  const colDurMs=90000;
-  const colElapsed=now-d.colStarts[S.colCount];
-  if(colElapsed>=colDurMs && S.colCount<nbCols-1){
-    S.colCount++;
-    S.plotCount=0;
-    d.colStarts.push(now);
-  }
-
-  // Calcul vitesse moyenne de la colonne courante
-  const colPassages=d.passages.filter(p=>p.col===S.colCount);
-  const colStart=d.colStarts[S.colCount]||0;
-  const colElapsedNow=now-colStart;
-  let vitMoy=null;
-  if(colElapsedNow>0 && colPassages.length>0){
-    const distCol=colPassages.length*S.distPlots; // mètres
-    vitMoy=distCol/(colElapsedNow/1000)*3.6; // km/h
-  }
-
-  // Affichage
-  if(vitMoy!==null){
-    const ecart=vitMoy-vitCible;
-    document.getElementById('dispVitMoy').textContent=vitMoy.toFixed(1)+' km/h';
-    document.getElementById('dispEcart').textContent=(ecart>=0?'+':'')+ecart.toFixed(1);
-    const fb=document.getElementById('feedbackBadge');
-    if(Math.abs(ecart)<=0.5){
-      fb.className='feedback-badge ok';
-      fb.textContent='✓ DANS LA ZONE';
-      document.getElementById('dispEcart').className='val green';
-    } else if(ecart>0.5){
-      fb.className='feedback-badge fast';
-      fb.textContent='⚡ TROP RAPIDE';
-      document.getElementById('dispEcart').className='val red';
-    } else {
-      fb.className='feedback-badge slow';
-      fb.textContent='🐢 TROP LENT';
-      document.getElementById('dispEcart').className='val yellow';
-    }
-  }
-
+  $('btnMarche').classList.remove('active');
+  $('btnMarche').setAttribute('aria-pressed','false');
+  vibrate(30);
+  const b=$('btnPlot'); b.classList.add('flash'); setTimeout(()=>b.classList.remove('flash'),120);
+  updateLiveStats();
+  updateControls();
   renderTable();
+  save();
 }
 
-// ══════════════════════════════════════════════════════════
-//  TABLE
-// ══════════════════════════════════════════════════════════
+function undoPlot(){
+  const d=cur();
+  if(!d.passages.length) return;
+  d.passages.pop();
+  updateLiveStats();
+  updateControls();
+  renderTable();
+  save();
+}
+
+function resetSerie(){
+  if(S.chronoRunning) return;
+  if(!confirm(`Effacer tous les passages de ${S.runners[S.activeRunner].name} sur la série ${S.currentSerieIdx+1} ?`)) return;
+  S.data[S.activeRunner][S.currentSerieIdx]=emptySerieData();
+  $('feedbackBadge').className='feedback-badge hidden';
+  renderCourseUI();
+  save();
+}
+
+function updateLiveStats(){
+  const r=S.activeRunner, si=S.currentSerieIdx;
+  const serie=S.series[si], d=cur();
+  const cible=S.runners[r].projets[si];
+  const col=colOf(d.elapsed,serie);
+  const colPassages=d.passages.filter(p=>colOf(p.t,serie)===col);
+  const n=colPassages.length;
+
+  $('dispCol').textContent=`${col+1}/${serie.nbCols}`;
+  $('dispPlots').textContent=`${n} / ${Math.round(plotsPerCol(cible))}`;
+  $('dispDist').textContent=d.passages.length*S.distPlots;
+  $('plotCount').textContent=d.passages.length;
+
+  // Vitesse de la colonne, mesurée au dernier passage enregistré
+  const ecartEl=$('dispEcart'), fb=$('feedbackBadge');
+  if(d.done) showSerieVerdict();
+  // (ignorée pendant les 3 premières secondes de colonne : trop instable)
+  const last=colPassages[n-1];
+  const vit=last&&last.t-col*COL_MS>=3000?speedKmh(n, last.t-col*COL_MS):null;
+  if(vit===null){
+    $('dispVitMoy').textContent='—';
+    ecartEl.textContent='—';
+    ecartEl.className='val accent';
+    if(!d.done) fb.className='feedback-badge hidden';
+    return;
+  }
+  const ecart=vit-cible, zone=zoneOf(ecart);
+  $('dispVitMoy').textContent=fr(vit);
+  ecartEl.textContent=(ecart>=0?'+':'')+fr(ecart);
+  ecartEl.className='val '+ZONE_COLOR[zone];
+  if(!d.done){
+    fb.className='feedback-badge '+zone;
+    fb.textContent=ZONE_LABEL[zone];
+  }
+}
+
+// ── Tableau ──
 function renderTable(){
   const r=S.activeRunner, si=S.currentSerieIdx;
-  const serie=S.series[si];
-  const d=S.data[r][si];
-  const nbCols=serie.nbCols;
-  const wrap=document.getElementById('tableWrap');
+  const serie=S.series[si], d=cur();
+  const wrap=$('tableWrap');
+  const target=Math.round(plotsPerCol(S.runners[r].projets[si]));
 
   if(d.passages.length===0){
-    wrap.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px;">En attente du premier passage…</p>';
+    wrap.innerHTML=`<p style="color:var(--muted);text-align:center;padding:20px;">En attente du premier passage… (objectif ≈ ${target} plots par colonne)</p>`;
     return;
   }
 
-  // Group passages by column
+  const st=serieStats(r,si);
   const colGroups=[];
-  for(let c=0;c<nbCols;c++){
-    colGroups.push(d.passages.filter(p=>p.col===c));
-  }
-  const maxRows=Math.max(...colGroups.map(g=>g.length),1);
+  for(let c=0;c<serie.nbCols;c++) colGroups.push(d.passages.filter(p=>colOf(p.t,serie)===c));
+  const maxRows=Math.max(...colGroups.map(g=>g.length), target, 1);
+  const curCol=colOf(d.elapsed,serie);
 
   let html='<table class="passage"><thead><tr><th>Plot</th>';
-  for(let c=0;c<nbCols;c++) html+=`<th>Col.${c+1}<br><small style="color:var(--muted)">${msToDurStr(c*90000)}–${msToDurStr((c+1)*90000)}</small></th>`;
+  for(let c=0;c<serie.nbCols;c++){
+    html+=`<th class="${c===curCol&&!d.done?'current':''}">Col.${c+1}<br><small style="color:var(--muted)">${msToDurStr(c*COL_MS)}–${msToDurStr((c+1)*COL_MS)}</small></th>`;
+  }
   html+='</tr></thead><tbody>';
 
   for(let row=maxRows-1;row>=0;row--){
-    html+=`<tr><td style="color:var(--muted)">${row+1}</td>`;
-    for(let c=0;c<nbCols;c++){
+    html+=`<tr class="${row+1===target?'target-row':''}"><td style="color:var(--muted)">${row+1}${row+1===target?' 🎯':''}</td>`;
+    for(let c=0;c<serie.nbCols;c++){
       const p=colGroups[c][row];
-      if(p){
-        const isMar=p.marcheNext||d.marcheSet.has(d.passages.indexOf(p));
-        html+=`<td class="${isMar?'marche':'crossed'}">${isMar?'🚶':'×'}</td>`;
-      } else {
-        html+='<td></td>';
-      }
+      html+=p?`<td class="${p.marche?'marche':'crossed'}" title="${msToDurStr(p.t)}">${p.marche?'🚶':'×'}</td>`:'<td></td>';
     }
     html+='</tr>';
   }
-  html+='</tbody></table>';
+  html+='</tbody><tfoot><tr><td>km/h</td>';
+  st.cols.forEach(c=>{
+    if(c.vit===null){ html+='<td></td>'; return; }
+    const z=zoneOf(c.vit-st.cible);
+    html+=`<td style="color:var(--${ZONE_COLOR[z]})">${fr(c.vit)}</td>`;
+  });
+  html+='</tr></tfoot></table>';
   wrap.innerHTML=html;
 }
 
-// ══════════════════════════════════════════════════════════
-//  SWITCH / NEXT SERIE
-// ══════════════════════════════════════════════════════════
+// ── Enchaînement ──
+function nextSerieIdx(r, from){
+  for(let i=from+1;i<S.series.length;i++) if(!S.data[r][i].done) return i;
+  return null;
+}
+function firstOpenSerie(r){
+  for(let i=0;i<S.series.length;i++) if(!S.data[r][i].done) return i;
+  return null;
+}
+
 function nextSerie(){
-  // Move to next serie for this runner then switch
-  if(S.currentSerieIdx<S.series.length-1){
-    S.currentSerieIdx++;
-    document.getElementById('btnNextSerie').style.display='none';
-    S.chronoElapsed=0;
-    S.chronoFinished=false;
-    initCourse();
-  } else {
-    alert('Toutes les séries sont terminées pour '+S.runners[S.activeRunner].name+' !');
-  }
+  if(S.chronoRunning) return;
+  const n=nextSerieIdx(S.activeRunner,S.currentSerieIdx);
+  if(n===null){ alert('Toutes les séries sont terminées pour '+S.runners[S.activeRunner].name+' !'); return; }
+  S.currentSerieIdx=n;
+  $('feedbackBadge').className='feedback-badge hidden';
+  initCourse();
+  save();
 }
 
 function switchRunner(){
-  if(S.chronoRunning){alert('Mettez le chrono en pause avant de changer de coureur.');return;}
-  S.activeRunner=S.activeRunner===0?1:0;
-  // find next incomplete serie for this runner
-  let nextSerie=0;
-  for(let i=0;i<S.series.length;i++){
-    if(S.data[S.activeRunner][i].passages.length===0){nextSerie=i;break;}
-    nextSerie=i;
-  }
-  S.currentSerieIdx=nextSerie;
-  S.chronoElapsed=0;
-  S.chronoFinished=false;
+  if(S.chronoRunning){ alert('Mettez le chrono en pause avant de changer de coureur.'); return; }
+  S.activeRunner=1-S.activeRunner;
+  // reprendre la première série non terminée de ce coureur (même partiellement courue)
+  const open=firstOpenSerie(S.activeRunner);
+  S.currentSerieIdx=open!==null?open:S.series.length-1;
+  $('feedbackBadge').className='feedback-badge hidden';
   initCourse();
+  save();
+  if(open===null) alert(`${S.runners[S.activeRunner].name} a terminé toutes ses séries.`);
 }
+
+// ── Clavier (utile sur ordinateur / clavier Bluetooth) ──
+document.addEventListener('keydown',e=>{
+  if(S.step!==2) return;
+  if(e.target.matches('input,select,textarea')) return;
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  const k=e.key.toLowerCase();
+  if(k===' '||k==='enter'){ e.preventDefault(); clickPlot(); }
+  else if(k==='m'){ e.preventDefault(); toggleMarche(); }
+  else if(k==='z'||k==='backspace'){ e.preventDefault(); undoPlot(); }
+  else if(k==='p'){ e.preventDefault(); startStopSerie(); }
+});
+// Évite qu'un bouton garde le focus et soit ré-activé par la barre d'espace.
+$('screen3').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) b.blur(); });
+
+window.addEventListener('beforeunload',e=>{
+  if(S.step===2){ if(S.chronoRunning) pauseChrono(); else save(); }
+});
 
 // ══════════════════════════════════════════════════════════
 //  RÉSULTATS
 // ══════════════════════════════════════════════════════════
 function goStep4(){
-  if(S.chronoRunning){ alert('Terminez la série en cours avant de finaliser.'); return; }
+  if(S.chronoRunning){ alert('Mettez le chrono en pause ou terminez la série avant de finaliser.'); return; }
   renderResults();
   goStep(3);
 }
 
 function renderResults(){
-  const wrap=document.getElementById('resultsContent');
-  let html=`<p style="color:var(--muted);margin-bottom:20px;">${S.nomSeance} · Piste ${S.distPiste}m · Plots ${S.distPlots}m</p>`;
+  let html=`<p style="color:var(--muted);margin-bottom:20px;">${esc(S.nomSeance)} · Piste ${S.distPiste} m · Plots ${S.distPlots} m · Tolérance ±${fr(S.tolerance)} km/h</p>`;
   for(let r=0;r<2;r++){
     const runner=S.runners[r];
-    html+=`<div class="result-block"><h3>${runner.name} — VMA ${runner.vma} km/h</h3>`;
+    let inZone=0, ran=0, totalDist=0, sumAbs=0;
+    html+=`<div class="result-block"><h3>${esc(runner.name)} — VMA ${fr(runner.vma)} km/h</h3>`;
     S.series.forEach((serie,si)=>{
-      const d=S.data[r][si];
-      const passages=d.passages.length;
-      const marche=d.marcheSet.size;
-      const dist=passages*S.distPlots;
-      const vitMoy=serie.dureeMs>0?(dist/(serie.dureeMs/1000)*3.6):0;
-      const cible=runner.projets[si];
-      const ecart=vitMoy-cible;
-      const zone=Math.abs(ecart)<=0.5;
-      html+=`<div style="margin:8px 0;padding:8px;background:var(--bg);border-radius:6px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-        <span style="font-family:'Bebas Neue',sans-serif;color:var(--accent);">S${si+1}</span>
-        <span style="font-size:0.8rem;color:var(--muted)">${msToDurStr(serie.dureeMs)}</span>
-        <span>${passages} plots · ${dist}m</span>
-        <span>Vit moy: <b style="color:${zone?'var(--green)':ecart>0.5?'var(--red)':'var(--yellow)'}">${vitMoy.toFixed(1)} km/h</b></span>
-        <span>Cible: ${cible} km/h (${Math.round(cible/runner.vma*100)}%VMA)</span>
-        <span class="tag ${zone?'tag-green':'tag-red'}">${zone?'✓ DANS LA ZONE':ecart>0.5?'⚡ TROP RAPIDE':'🐢 TROP LENT'}</span>
-        ${marche>0?`<span class="tag tag-red">🚶 ${marche} marche(s)</span>`:''}
+      const st=serieStats(r,si);
+      totalDist+=st.dist;
+      if(st.vit===null){
+        html+=`<div class="result-line"><span class="s">S${si+1}</span><span style="font-size:0.8rem;color:var(--muted)">${msToDurStr(serie.dureeMs)}</span><span class="tag tag-muted">Non courue</span></div>`;
+        return;
+      }
+      ran++; sumAbs+=Math.abs(st.ecart);
+      if(st.zone==='ok') inZone++;
+      const tagCls={ok:'tag-green',fast:'tag-red',slow:'tag-yellow'}[st.zone];
+      html+=`<div class="result-line">
+        <span class="s">S${si+1}</span>
+        <span style="font-size:0.8rem;color:var(--muted)">${msToDurStr(st.d.elapsed)}${st.d.done?'':' / '+msToDurStr(serie.dureeMs)+' (incomplète)'}</span>
+        <span>${st.nb} plots · ${st.dist} m</span>
+        <span>Vit. moy. : <b style="color:var(--${ZONE_COLOR[st.zone]})">${fr(st.vit)} km/h</b></span>
+        <span>Cible : ${fr(st.cible)} km/h (${st.pctVma}% VMA)</span>
+        <span class="tag ${tagCls}">${ZONE_LABEL[st.zone]} (${st.ecart>=0?'+':''}${fr(st.ecart)})</span>
+        ${st.marches>0?`<span class="tag tag-red">🚶 ${st.marches} marche(s)</span>`:''}
+        <div class="result-cols">${st.cols.map((c,ci)=>c.vit===null?'':`<span title="${c.n} plots">Col.${ci+1} : <b style="color:var(--${ZONE_COLOR[zoneOf(c.vit-st.cible)]})">${fr(c.vit)}</b></span>`).join('')}</div>
       </div>`;
     });
+    if(ran>0){
+      html+=`<div class="result-summary">Bilan : <b>${inZone}/${ran}</b> série(s) dans la zone · écart moyen ${fr(sumAbs/ran)} km/h · distance totale ${totalDist} m</div>`;
+    }
     html+='</div>';
   }
-  wrap.innerHTML=html;
+  $('resultsContent').innerHTML=html;
 }
 
 // ══════════════════════════════════════════════════════════
 //  EXPORT
 // ══════════════════════════════════════════════════════════
-function buildCSVData(){
-  const rows=[['Séance',S.nomSeance,'Piste',S.distPiste+'m','Plots',S.distPlots+'m'],[]];
+function buildRows(){
+  const rows=[
+    ['Séance',S.nomSeance,'Date',new Date().toLocaleDateString('fr-FR')],
+    ['Piste (m)',S.distPiste,'Plots (m)',S.distPlots,'Tolérance (km/h)',fr(S.tolerance)],
+    []
+  ];
+  const maxCols=Math.max(...S.series.map(s=>s.nbCols));
   for(let r=0;r<2;r++){
     const runner=S.runners[r];
-    rows.push([runner.name,'VMA '+runner.vma+' km/h']);
-    rows.push(['Série','Durée','Cible (km/h)','%VMA','Passages','Distance (m)','Vit moy (km/h)','Écart','Zone?','Marches']);
+    rows.push([runner.name,'VMA (km/h)',fr(runner.vma)]);
+    const head=['Série','Durée prévue','Durée courue','Cible (km/h)','% VMA','Plots','Distance (m)','Vit. moy. (km/h)','Écart (km/h)','Zone','Marches'];
+    for(let c=0;c<maxCols;c++) head.push(`Col.${c+1} plots`,`Col.${c+1} km/h`);
+    rows.push(head);
     S.series.forEach((serie,si)=>{
-      const d=S.data[r][si];
-      const passages=d.passages.length;
-      const dist=passages*S.distPlots;
-      const vitMoy=serie.dureeMs>0?(dist/(serie.dureeMs/1000)*3.6):0;
-      const cible=runner.projets[si];
-      const ecart=(vitMoy-cible).toFixed(1);
-      const zone=Math.abs(vitMoy-cible)<=0.5?'OUI':'NON';
-      const marche=d.marcheSet.size;
-      rows.push([`S${si+1}`,msToDurStr(serie.dureeMs),cible,Math.round(cible/runner.vma*100)+'%',
-        passages,dist,vitMoy.toFixed(1),ecart,zone,marche]);
+      const st=serieStats(r,si);
+      const row=[`S${si+1}`,msToDurStr(serie.dureeMs),msToDurStr(st.d.elapsed),fr(st.cible),st.pctVma+'%',
+        st.nb,st.dist,st.vit!==null?fr(st.vit):'',st.ecart!==null?fr(st.ecart):'',
+        st.zone?{ok:'OUI',fast:'NON (trop rapide)',slow:'NON (trop lent)'}[st.zone]:'Non courue',st.marches];
+      st.cols.forEach(c=>row.push(c.n, c.vit!==null?fr(c.vit):''));
+      rows.push(row);
     });
-    // detail passages
-    rows.push(['','Détail passages :']);
+    rows.push(['','Détail des passages (temps depuis le départ)']);
     S.series.forEach((serie,si)=>{
       const d=S.data[r][si];
-      rows.push([`S${si+1}`,...d.passages.map((p,i)=>`t=${msToDurStr(p.t)} col=${p.col+1}${d.marcheSet.has(i)?'[M]':''}`)]);
+      rows.push([`S${si+1}`,...d.passages.map(p=>`${msToDurStr(p.t)} (col ${colOf(p.t,serie)+1})${p.marche?' [M]':''}`)]);
     });
     rows.push([]);
   }
-  return rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  return rows;
+}
+
+function fileBase(){
+  const name=(S.nomSeance||'Seance').replace(/[\\/:*?"<>|\s]+/g,'_');
+  return `VMA_${name}_${new Date().toISOString().slice(0,10)}`;
+}
+
+function download(blob, filename){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
 function exportCSV(){
-  const csv=buildCSVData();
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`VMA_${S.nomSeance.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
+  // Séparateur « ; » : c'est celui qu'attend Excel en paramètres régionaux français.
+  const csv=buildRows().map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\r\n');
+  download(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}), fileBase()+'.csv');
 }
 
 function exportXLS(){
-  // Simple SYLK-like HTML table export readable by Excel
-  const csv=buildCSVData();
-  // Use CSV with BOM, Excel opens it natively; for .xls we build a simple HTML table
+  const sheet=esc((S.nomSeance||'Séance').slice(0,31));
   let html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
   html+='<head><meta charset="UTF-8"><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>';
-  html+=`<x:Name>${S.nomSeance||'Séance'}</x:Name>`;
+  html+=`<x:Name>${sheet}</x:Name>`;
   html+='<x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head><body>';
   html+='<table border="1">';
-  // parse csv
-  csv.split('\n').forEach(line=>{
-    html+='<tr>';
-    line.split(',').forEach(cell=>{
-      const v=cell.replace(/^"|"$/g,'').replace(/""/g,'"');
-      html+=`<td>${v}</td>`;
-    });
-    html+='</tr>';
+  buildRows().forEach(row=>{
+    html+='<tr>'+row.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr>';
   });
   html+='</table></body></html>';
-  const blob=new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`VMA_${S.nomSeance.replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.xls`;
-  a.click();
+  download(new Blob(['﻿'+html],{type:'application/vnd.ms-excel;charset=utf-8'}), fileBase()+'.xls');
 }
 
 // ══════════════════════════════════════════════════════════
-//  BOOT
+//  DÉMARRAGE
 // ══════════════════════════════════════════════════════════
-genSeries();
+$('nbSeries').addEventListener('change',()=>genSeries());
+genSeries([2,2,2]);
+(function checkSaved(){
+  const saved=loadSaved();
+  if(saved && saved.step>0 && Array.isArray(saved.series) && saved.series.length){
+    const when=saved.savedAt?new Date(saved.savedAt).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}):'';
+    $('resumeInfo').textContent=`(${saved.nomSeance||'Séance'}${when?' · '+when:''})`;
+    $('resumeBanner').hidden=false;
+  }
+})();
 </script>
 </body>
 </html>
